@@ -1,0 +1,66 @@
+  
+---
+title: 'Assignment 1'
+author: Kiss Gyula
+date: 2020-11-23
+output:
+  prettydoc::html_pretty:
+    highlight: github
+---
+
+* Find a news website or any website where you can search for a keyword and the matches return in a list.
+* Create a function which downloads information from a url to dataframe from the website that you found interesting.
+
+```{r, echo=TRUE, warning=FALSE}
+library(rvest)
+library(data.table)
+my_url <- 'https://24.hu/page/1/?s=CEU'
+get_data <- function(my_url){
+    print(my_url)
+    t <- read_html(my_url)
+    boxes <- 
+      t %>% 
+      html_nodes('.m-entryPost__title')  
+    
+    x <- boxes[[1]]
+    boxes_dfs <- lapply(boxes, function(x){
+       tl <- list()
+       tl[['title']] <- paste0(x %>% html_nodes('.m-entryPost__link') %>% html_text(), collapse = ' ')
+       tl[['link']] <-  x %>% html_nodes('.m-entryPost__link') %>% html_attr('href')
+    return(tl)
+})
+df <- rbindlist(boxes_dfs)
+return(df)
+}
+
+```
+
+```{r, echo=TRUE, warning=FALSE}
+df <- get_data(my_url)
+
+```
+
+
+* Create a function which requires two arguments. First a keyword then a number of pages to download.
+* Create the links and apply your function to the links that you created and save the dataframe into csv and rds objects.
+```{r, echo=TRUE, warning=FALSE}
+get_pages <- function(keyword, num_of_pages) {
+  links <- 
+    paste0('https://24.hu/page/', 1:num_of_pages, '/?s=', keyword )
+  ret_df <- rbindlist(lapply(links, get_data))
+  return(ret_df)
+  
+}
+```
+
+```{r, echo=TRUE, warning=FALSE}
+df <- get_pages('CEU', 4)
+```
+
+
+```{r, echo=TRUE, warning=FALSE}
+write.csv(df, 'output.csv')
+saveRDS(  df, 'output.rds')
+knitr::kable(df)
+```
+
